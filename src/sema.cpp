@@ -524,11 +524,33 @@ void Sema::visit_var_decl(ASTNode* node) {
                        : inferred ? inferred
                        : T_unknown;
 
-    // Type compatibility check
+    // Type compatibility check + narrowing warnings
     if (declared && inferred && inferred->kind != TypeKind::Unknown) {
         if (!types_compatible(declared, inferred)) {
             error("Type mismatch: cannot assign '" + type_str(inferred) +
                   "' to '" + type_str(declared) + "'", node->loc);
+        } else {
+            // Warn on precision-losing narrowing conversions that are
+            // technically allowed by types_compatible but hide bugs:
+            //   float → int   (truncates decimal part)
+            //   float → uint  (truncates + sign loss)
+            //   uint  → int   (potential sign loss on large values)
+            bool inferred_float = (inferred->kind == TypeKind::Float);
+            bool declared_int   = (declared->kind == TypeKind::Int ||
+                                   declared->kind == TypeKind::Uint ||
+                                   declared->kind == TypeKind::Byte);
+            if (inferred_float && declared_int)
+                warning("Implicit narrowing: float value assigned to '" +
+                        type_str(declared) + "' — decimal part is truncated",
+                        node->loc);
+
+            bool inferred_uint = (inferred->kind == TypeKind::Uint);
+            bool declared_int_only = (declared->kind == TypeKind::Int ||
+                                      declared->kind == TypeKind::Byte);
+            if (inferred_uint && declared_int_only)
+                warning("Implicit narrowing: uint value assigned to '" +
+                        type_str(declared) + "' — may overflow for large values",
+                        node->loc);
         }
     }
 
@@ -1040,6 +1062,13 @@ TypePtr Sema::infer_assign(ASTNode* node) {
                         error("Type mismatch in assignment to '" + target_name +
                               "': expected '" + type_str(lhs_t) +
                               "', got '" + type_str(rhs) + "'", node->loc);
+                    } else if (rhs && rhs->kind == TypeKind::Float &&
+                               lhs_t && (lhs_t->kind == TypeKind::Int   ||
+                                         lhs_t->kind == TypeKind::Uint  ||
+                                         lhs_t->kind == TypeKind::Byte)) {
+                        warning("Implicit narrowing: assigning float to '" +
+                                type_str(lhs_t) + "' in '" + target_name +
+                                "' — decimal part is truncated", node->loc);
                     }
                 }
                 sym->is_init = true;  // has been assigned

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(Aegis VERSION 0.2 LANGUAGES CXX C)
+project(Aegis VERSION 0.3 LANGUAGES CXX C)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,10 +14,17 @@ if(MSVC)
 else()
     # MinGW / GCC / Clang
     add_compile_options(-Wall -Wextra -O2)
+    # Prevent Windows SDK macros from leaking into Aegis translation units.
+    # platform.cpp is the only TU that #includes <windows.h>; these guards
+    # ensure no other TU accidentally picks up conflicting typedefs.
+    if(WIN32)
+        add_compile_definitions(WIN32_LEAN_AND_MEAN NOMINMAX NOGDI NOSERVICE)
+    endif()
 endif()
 
 # ── Aegis compiler executable ───────────────────────────────────
 set(AEGIS_SOURCES
+    src/platform.cpp   # MUST be first: isolated Windows header inclusion
     src/main.cpp
     src/lexer.cpp
     src/parser.cpp

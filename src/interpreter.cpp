@@ -1,4 +1,6 @@
 #include "interpreter.hpp"
+// platform.hpp after Aegis type headers to avoid Windows SDK name collisions
+#include "platform.hpp"
 #include <iostream>
 #include <sstream>
 #include <cmath>
@@ -603,8 +605,11 @@ ValuePtr Interpreter::exec_stmt(ASTNode* node, std::shared_ptr<Env> env) {
             // Emit a one-time diagnostic so users are not surprised.
             static std::once_flag par_for_warned;
             std::call_once(par_for_warned, []() {
-                std::cerr << "\033[33m[Warning] 'par for' runs sequentially "
-                             "in interpreter mode (parallelism only in compiled output)\033[0m\n";
+                auto& c = platform::stderr_colors();
+                std::cerr << c.yellow
+                          << "[Warning] 'par for' runs sequentially "
+                             "in interpreter mode (parallelism only in compiled output)"
+                          << c.reset << "\n";
             });
             return exec_for(node, env);
         }
@@ -708,9 +713,12 @@ ValuePtr Interpreter::exec_match(ASTNode* node, std::shared_ptr<Env> env) {
     // No arm matched — emit a runtime warning so silent null returns are visible
     {
         std::lock_guard<std::mutex> lk(print_mutex_);
-        std::cerr << "\033[33m[Warning] Non-exhaustive match: no arm matched value '"
+        auto& c = platform::stderr_colors();
+        std::cerr << c.yellow
+                  << "[Warning] Non-exhaustive match: no arm matched value '"
                   << (subject ? subject->to_display() : "null")
-                  << "' at line " << node->loc.line << "\033[0m\n";
+                  << "' at line " << node->loc.line
+                  << c.reset << "\n";
     }
     return Value::make_null();
 }
@@ -773,6 +781,18 @@ ValuePtr Interpreter::eval(ASTNode* node, std::shared_ptr<Env> env) {
             ValuePtr v = env->get(node->sval);
             if (!v) throw RuntimeError("Undefined variable '" + node->sval + "'",
                                        node->loc.line, node->loc.col);
+            // Detect use-after-move: reading an owned variable that was moved
+            if (v->kind == ValueKind::Owned && v->owned && v->owned->moved)
+                throw RuntimeError("Use of moved value '" + node->sval +
+                                   "' — ownership was already transferred",
+                                   node->loc.line, node->loc.col);
+            // Detect reading a null that resulted from a move (belt-and-suspenders)
+            if (v->kind == ValueKind::Null) {
+                // Only error if the variable is in scope and was previously owned
+                // (i.e. it was nullified by move()). We can't distinguish this from
+                // a legitimately null variable, so we stay silent here — the
+                // move() site already threw or the programmer used null deliberately.
+            }
             return v;
         }
 
@@ -872,7 +892,9 @@ ValuePtr Interpreter::eval(ASTNode* node, std::shared_ptr<Env> env) {
                     exec_block(body, spawn_env);
                 } catch (const RuntimeError& e) {
                     std::lock_guard<std::mutex> lk(print_mutex_);
-                    std::cerr << "\033[31m[Thread RuntimeError] " << e.message << "\033[0m\n";
+                    auto& c = platform::stderr_colors();
+                    std::cerr << c.red << "[Thread RuntimeError] "
+                              << e.message << c.reset << "\n";
                 }
             });
             thread_val->thread_handle = t_handle;

@@ -1,21 +1,24 @@
 #pragma once
 #include <iostream>
 #include <string>
+// Aegis AST types first, then platform (which may pull in Windows headers
+// indirectly through the translation unit — platform.hpp itself is clean)
 #include "ast.hpp"
+#include "platform.hpp"
 
-// ─────────────────────────────────────────────
-//  ANSI colour helpers
-// ─────────────────────────────────────────────
+// Colour helpers for the AST printer — resolved at runtime based on
+// whether stdout actually supports ANSI escape codes.
+// On Windows CMD without VT processing (old conhost) these are empty strings.
 namespace col {
-    inline const char* reset  = "\033[0m";
-    inline const char* bold   = "\033[1m";
-    inline const char* blue   = "\033[34m";
-    inline const char* cyan   = "\033[36m";
-    inline const char* green  = "\033[32m";
-    inline const char* yellow = "\033[33m";
-    inline const char* magenta= "\033[35m";
-    inline const char* red    = "\033[31m";
-    inline const char* grey   = "\033[90m";
+    inline const char* reset()   { return platform::stdout_colors().reset;   }
+    inline const char* bold()    { return platform::stdout_colors().bold;     }
+    inline const char* blue()    { return platform::stdout_colors().blue;     }
+    inline const char* cyan()    { return platform::stdout_colors().cyan;     }
+    inline const char* green()   { return platform::stdout_colors().green;    }
+    inline const char* yellow()  { return platform::stdout_colors().yellow;   }
+    inline const char* magenta() { return platform::stdout_colors().magenta;  }
+    inline const char* red()     { return platform::stdout_colors().red;      }
+    inline const char* grey()    { return platform::stdout_colors().grey;     }
 }
 
 inline std::string node_kind_name(NodeKind k) {
@@ -92,13 +95,20 @@ inline std::string node_kind_name(NodeKind k) {
 //  ASTPrinter
 // ─────────────────────────────────────────────
 class ASTPrinter {
+    // Tree drawing characters — ASCII fallback for non-UTF-8 terminals
+    // (Windows CMD, old conhost, etc.)
+    static const char* T_BRANCH() { return platform::terminal_supports_utf8() ? "\xe2\x94\x9c\xe2\x94\x80\xe2\x94\x80 " : "+-- "; }  // ├──
+    static const char* T_LAST()   { return platform::terminal_supports_utf8() ? "\xe2\x94\x94\xe2\x94\x80\xe2\x94\x80 " : "`-- "; }  // └──
+    static const char* T_PIPE()   { return platform::terminal_supports_utf8() ? "\xe2\x94\x82   " : "|   "; }                         // │
+    static const char* T_BLANK()  { return "    "; }  // 4 spaces
+
 public:
     void print(const ASTNode* node, const std::string& prefix = "",
                bool is_last = true) {
         if (!node) return;
 
-        std::string connector = is_last ? "└── " : "├── ";
-        std::string child_pre = prefix + (is_last ? "    " : "│   ");
+        std::string connector = is_last ? T_LAST() : T_BRANCH();
+        std::string child_pre = prefix + (is_last ? T_BLANK() : T_PIPE());
 
         // Node header
         std::cout << prefix << connector;
@@ -122,13 +132,13 @@ public:
                 for (auto& c : node->children) push(c.get(), "child");
                 // Print params separately
                 for (auto& p : node->params) {
-                    std::cout << child_pre << "├── " << col::grey
-                              << "param: " << col::reset
-                              << col::cyan << p.name << col::reset;
+                    std::cout << child_pre << T_BRANCH() << col::grey()
+                              << "param: " << col::reset()
+                              << col::cyan() << p.name << col::reset();
                     if (p.type) { std::cout << ": "; }
                     std::cout << (p.is_mut ? " [mut]" : "") << "\n";
                     if (p.type)
-                        print(p.type.get(), child_pre + "│   ", true);
+                        print(p.type.get(), child_pre + T_PIPE(), true);
                 }
                 break;
             case NodeKind::ClassDecl:
@@ -140,9 +150,9 @@ public:
                     auto& br = node->branches[i];
                     std::string lbl = br.condition ? (i==0?"if_cond":"elif_cond") : "else";
                     bool last_br    = (i == node->branches.size()-1);
-                    std::string icon = last_br ? "└── " : "├── ";
-                    std::cout << child_pre << icon << col::blue << lbl << col::reset << "\n";
-                    std::string sub = child_pre + (last_br ? "    " : "│   ");
+                    std::string icon = last_br ? T_LAST() : T_BRANCH();
+                    std::cout << child_pre << icon << col::blue() << lbl << col::reset() << "\n";
+                    std::string sub = child_pre + (last_br ? T_BLANK() : T_PIPE());
                     if (br.condition) print(br.condition.get(), sub, false);
                     print(br.body.get(), sub, true);
                 }
@@ -150,21 +160,21 @@ public:
             case NodeKind::MatchStmt:
                 push(node->left.get(), "subject");
                 for (auto& arm : node->arms) {
-                    std::cout << child_pre << "├── " << col::blue << "arm" << col::reset << "\n";
-                    print(arm.pattern.get(), child_pre + "│   ", false);
-                    print(arm.body.get(),    child_pre + "│   ", true);
+                    std::cout << child_pre << T_BRANCH() << col::blue() << "arm" << col::reset() << "\n";
+                    print(arm.pattern.get(), child_pre + T_PIPE(), false);
+                    print(arm.body.get(),    child_pre + T_PIPE(), true);
                 }
                 break;
             case NodeKind::AsmExpr:
             case NodeKind::AsmExprBind:
                 for (auto& b : node->asm_binds) {
-                    std::cout << child_pre << "├── " << col::grey
+                    std::cout << child_pre << T_BRANCH() << col::grey()
                               << (b.is_out?"out ":"") << b.reg << " = " << b.var
-                              << col::reset << "\n";
+                              << col::reset() << "\n";
                 }
                 for (auto& l : node->str_list) {
-                    std::cout << child_pre << "├── " << col::green
-                              << "  " << l << col::reset << "\n";
+                    std::cout << child_pre << T_BRANCH() << col::green()
+                              << "  " << l << col::reset() << "\n";
                 }
                 break;
             default:
@@ -174,67 +184,67 @@ public:
                 for (auto& c : node->children) push(c.get(), "child");
                 // LambdaExpr params
                 for (auto& p : node->params) {
-                    std::cout << child_pre << "├── " << col::grey
-                              << "param: " << col::cyan << p.name << col::reset << "\n";
-                    if (p.type) print(p.type.get(), child_pre + "│   ", true);
+                    std::cout << child_pre << T_BRANCH() << col::grey()
+                              << "param: " << col::cyan() << p.name << col::reset() << "\n";
+                    if (p.type) print(p.type.get(), child_pre + T_PIPE(), true);
                 }
                 break;
         }
 
         for (size_t i = 0; i < kids.size(); ++i) {
             bool last = (i == kids.size()-1);
-            std::cout << child_pre << (last?"└── ":"├── ")
-                      << col::grey << kids[i].label << ": " << col::reset;
+            std::cout << child_pre << (last?T_LAST():T_BRANCH())
+                      << col::grey() << kids[i].label << ": " << col::reset();
             // remove the connector from print — print_inline
-            print_inline(kids[i].ptr, child_pre + (last?"    ":"│   "));
+            print_inline(kids[i].ptr, child_pre + (last?T_BLANK():T_PIPE()));
         }
     }
 
 private:
     void print_node_header(const ASTNode* n) {
         // colour by category
-        const char* c = col::reset;
+        const char* c = col::reset();
         switch (n->kind) {
             case NodeKind::IntLit: case NodeKind::FloatLit:
-                c = col::yellow; break;
+                c = col::yellow(); break;
             case NodeKind::StrLit: case NodeKind::CharLit:
-                c = col::green; break;
+                c = col::green(); break;
             case NodeKind::BoolLit: case NodeKind::NullLit:
-                c = col::magenta; break;
+                c = col::magenta(); break;
             case NodeKind::Ident:
-                c = col::cyan; break;
+                c = col::cyan(); break;
             case NodeKind::FuncDecl: case NodeKind::AsyncFuncDecl:
             case NodeKind::ClassDecl: case NodeKind::InitDecl:
-                c = col::bold; break;
+                c = col::bold(); break;
             case NodeKind::BinaryExpr: case NodeKind::UnaryExpr:
             case NodeKind::AssignExpr:
-                c = col::blue; break;
-            default: c = col::reset; break;
+                c = col::blue(); break;
+            default: c = col::reset(); break;
         }
 
-        std::cout << c << node_kind_name(n->kind) << col::reset;
+        std::cout << c << node_kind_name(n->kind) << col::reset();
 
         // print key value annotations
         if (!n->sval.empty())
-            std::cout << col::grey << "  \"" << n->sval << "\"" << col::reset;
+            std::cout << col::grey() << "  \"" << n->sval << "\"" << col::reset();
         if (n->kind == NodeKind::IntLit)
-            std::cout << col::yellow << "  (" << n->ival << ")" << col::reset;
+            std::cout << col::yellow() << "  (" << n->ival << ")" << col::reset();
         if (n->kind == NodeKind::FloatLit)
-            std::cout << col::yellow << "  (" << n->fval << ")" << col::reset;
+            std::cout << col::yellow() << "  (" << n->fval << ")" << col::reset();
         if (n->kind == NodeKind::BoolLit)
-            std::cout << col::magenta << "  (" << (n->bval?"true":"false") << ")" << col::reset;
-        if (n->is_mut)   std::cout << col::red   << " [mut]"   << col::reset;
-        if (n->is_const) std::cout << col::red   << " [const]" << col::reset;
-        if (n->is_async) std::cout << col::blue  << " [async]" << col::reset;
-        if (n->is_ref)   std::cout << col::grey  << " [ref]"   << col::reset;
+            std::cout << col::magenta() << "  (" << (n->bval?"true":"false") << ")" << col::reset();
+        if (n->is_mut)   std::cout << col::red()   << " [mut]"   << col::reset();
+        if (n->is_const) std::cout << col::red()   << " [const]" << col::reset();
+        if (n->is_async) std::cout << col::blue()  << " [async]" << col::reset();
+        if (n->is_ref)   std::cout << col::grey()  << " [ref]"   << col::reset();
 
         // source location
-        std::cout << col::grey << "  @" << n->loc.line << ":" << n->loc.col << col::reset;
+        std::cout << col::grey() << "  @" << n->loc.line << ":" << n->loc.col << col::reset();
     }
 
     // Print a child inline (without duplicate connector)
     void print_inline(const ASTNode* node, const std::string& prefix) {
-        if (!node) { std::cout << col::grey << "(null)\n" << col::reset; return; }
+        if (!node) { std::cout << col::grey() << "(null)\n" << col::reset(); return; }
         print_node_header(node);
         std::cout << "\n";
 

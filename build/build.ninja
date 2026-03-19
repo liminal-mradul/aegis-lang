@@ -49,8 +49,21 @@ cmake_ninja_workdir = C$:/Users/91790/Downloads/aegis_final/aegis_patched/build/
 
 build cmake_object_order_depends_target_aegis: phony || .
 
+build CMakeFiles/aegis.dir/src/platform.cpp.obj: CXX_COMPILER__aegis_unscanned_Release C$:/Users/91790/Downloads/aegis_final/aegis_patched/src/platform.cpp || cmake_object_order_depends_target_aegis
+  CONFIG = Release
+  DEFINES = -DNOGDI -DNOMINMAX -DNOSERVICE -DWIN32_LEAN_AND_MEAN
+  DEP_FILE = CMakeFiles\aegis.dir\src\platform.cpp.obj.d
+  FLAGS = -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -O2
+  INCLUDES = -IC:/Users/91790/Downloads/aegis_final/aegis_patched/include
+  OBJECT_DIR = CMakeFiles\aegis.dir
+  OBJECT_FILE_DIR = CMakeFiles\aegis.dir\src
+  TARGET_COMPILE_PDB = CMakeFiles\aegis.dir\
+  TARGET_PDB = aegis.pdb
+  TARGET_SUPPORT_DIR = CMakeFiles\aegis.dir
+
 build CMakeFiles/aegis.dir/src/main.cpp.obj: CXX_COMPILER__aegis_unscanned_Release C$:/Users/91790/Downloads/aegis_final/aegis_patched/src/main.cpp || cmake_object_order_depends_target_aegis
   CONFIG = Release
+  DEFINES = -DNOGDI -DNOMINMAX -DNOSERVICE -DWIN32_LEAN_AND_MEAN
   DEP_FILE = CMakeFiles\aegis.dir\src\main.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -O2
   INCLUDES = -IC:/Users/91790/Downloads/aegis_final/aegis_patched/include
@@ -62,6 +75,7 @@ build CMakeFiles/aegis.dir/src/main.cpp.obj: CXX_COMPILER__aegis_unscanned_Relea
 
 build CMakeFiles/aegis.dir/src/lexer.cpp.obj: CXX_COMPILER__aegis_unscanned_Release C$:/Users/91790/Downloads/aegis_final/aegis_patched/src/lexer.cpp || cmake_object_order_depends_target_aegis
   CONFIG = Release
+  DEFINES = -DNOGDI -DNOMINMAX -DNOSERVICE -DWIN32_LEAN_AND_MEAN
   DEP_FILE = CMakeFiles\aegis.dir\src\lexer.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -O2
   INCLUDES = -IC:/Users/91790/Downloads/aegis_final/aegis_patched/include
@@ -73,6 +87,7 @@ build CMakeFiles/aegis.dir/src/lexer.cpp.obj: CXX_COMPILER__aegis_unscanned_Rele
 
 build CMakeFiles/aegis.dir/src/parser.cpp.obj: CXX_COMPILER__aegis_unscanned_Release C$:/Users/91790/Downloads/aegis_final/aegis_patched/src/parser.cpp || cmake_object_order_depends_target_aegis
   CONFIG = Release
+  DEFINES = -DNOGDI -DNOMINMAX -DNOSERVICE -DWIN32_LEAN_AND_MEAN
   DEP_FILE = CMakeFiles\aegis.dir\src\parser.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -O2
   INCLUDES = -IC:/Users/91790/Downloads/aegis_final/aegis_patched/include
@@ -84,6 +99,7 @@ build CMakeFiles/aegis.dir/src/parser.cpp.obj: CXX_COMPILER__aegis_unscanned_Rel
 
 build CMakeFiles/aegis.dir/src/sema.cpp.obj: CXX_COMPILER__aegis_unscanned_Release C$:/Users/91790/Downloads/aegis_final/aegis_patched/src/sema.cpp || cmake_object_order_depends_target_aegis
   CONFIG = Release
+  DEFINES = -DNOGDI -DNOMINMAX -DNOSERVICE -DWIN32_LEAN_AND_MEAN
   DEP_FILE = CMakeFiles\aegis.dir\src\sema.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -O2
   INCLUDES = -IC:/Users/91790/Downloads/aegis_final/aegis_patched/include
@@ -95,6 +111,7 @@ build CMakeFiles/aegis.dir/src/sema.cpp.obj: CXX_COMPILER__aegis_unscanned_Relea
 
 build CMakeFiles/aegis.dir/src/interpreter.cpp.obj: CXX_COMPILER__aegis_unscanned_Release C$:/Users/91790/Downloads/aegis_final/aegis_patched/src/interpreter.cpp || cmake_object_order_depends_target_aegis
   CONFIG = Release
+  DEFINES = -DNOGDI -DNOMINMAX -DNOSERVICE -DWIN32_LEAN_AND_MEAN
   DEP_FILE = CMakeFiles\aegis.dir\src\interpreter.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -O2
   INCLUDES = -IC:/Users/91790/Downloads/aegis_final/aegis_patched/include
@@ -106,6 +123,7 @@ build CMakeFiles/aegis.dir/src/interpreter.cpp.obj: CXX_COMPILER__aegis_unscanne
 
 build CMakeFiles/aegis.dir/src/codegen.cpp.obj: CXX_COMPILER__aegis_unscanned_Release C$:/Users/91790/Downloads/aegis_final/aegis_patched/src/codegen.cpp || cmake_object_order_depends_target_aegis
   CONFIG = Release
+  DEFINES = -DNOGDI -DNOMINMAX -DNOSERVICE -DWIN32_LEAN_AND_MEAN
   DEP_FILE = CMakeFiles\aegis.dir\src\codegen.cpp.obj.d
   FLAGS = -O3 -DNDEBUG -std=gnu++17 -Wall -Wextra -O2
   INCLUDES = -IC:/Users/91790/Downloads/aegis_final/aegis_patched/include
@@ -123,7 +141,7 @@ build CMakeFiles/aegis.dir/src/codegen.cpp.obj: CXX_COMPILER__aegis_unscanned_Re
 #############################################
 # Link the executable aegis.exe
 
-build aegis.exe: CXX_EXECUTABLE_LINKER__aegis_Release CMakeFiles/aegis.dir/src/main.cpp.obj CMakeFiles/aegis.dir/src/lexer.cpp.obj CMakeFiles/aegis.dir/src/parser.cpp.obj CMakeFiles/aegis.dir/src/sema.cpp.obj CMakeFiles/aegis.dir/src/interpreter.cpp.obj CMakeFiles/aegis.dir/src/codegen.cpp.obj
+build aegis.exe: CXX_EXECUTABLE_LINKER__aegis_Release CMakeFiles/aegis.dir/src/platform.cpp.obj CMakeFiles/aegis.dir/src/main.cpp.obj CMakeFiles/aegis.dir/src/lexer.cpp.obj CMakeFiles/aegis.dir/src/parser.cpp.obj CMakeFiles/aegis.dir/src/sema.cpp.obj CMakeFiles/aegis.dir/src/interpreter.cpp.obj CMakeFiles/aegis.dir/src/codegen.cpp.obj
   CONFIG = Release
   FLAGS = -O3 -DNDEBUG
   LINK_LIBRARIES = -lkernel32 -luser32 -lgdi32 -lwinspool -lshell32 -lole32 -loleaut32 -luuid -lcomdlg32 -ladvapi32
@@ -147,6 +165,7 @@ build cmake_object_order_depends_target_aegis_runtime: phony || .
 
 build CMakeFiles/aegis_runtime.dir/runtime/aegis_runtime.c.obj: C_COMPILER__aegis_runtime_unscanned_Release C$:/Users/91790/Downloads/aegis_final/aegis_patched/runtime/aegis_runtime.c || cmake_object_order_depends_target_aegis_runtime
   CONFIG = Release
+  DEFINES = -DNOGDI -DNOMINMAX -DNOSERVICE -DWIN32_LEAN_AND_MEAN
   DEP_FILE = CMakeFiles\aegis_runtime.dir\runtime\aegis_runtime.c.obj.d
   FLAGS = -O3 -DNDEBUG -Wall -Wextra -O2
   INCLUDES = -IC:/Users/91790/Downloads/aegis_final/aegis_patched/runtime

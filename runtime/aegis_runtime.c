@@ -154,6 +154,21 @@ static unsigned map_hash(const char* k) {
 AegisMap* aegis_map_new(void) {
     AegisMap* m = (AegisMap*)calloc(1, sizeof(AegisMap)); m->refcount = 1; return m;
 }
+void aegis_map_retain(AegisMap* m) { if (m) m->refcount++; }
+void aegis_map_release(AegisMap* m) {
+    if (!m || --m->refcount != 0) return;
+    /* Free all chained entries and their heap-allocated keys */
+    for (int i = 0; i < MAP_BUCKETS; i++) {
+        MapEntry* e = m->buckets[i];
+        while (e) {
+            MapEntry* next = e->next;
+            free(e->key);
+            free(e);
+            e = next;
+        }
+    }
+    free(m);
+}
 void aegis_map_set(AegisMap* m, const char* k, int64_t v) {
     unsigned h = map_hash(k);
     for (MapEntry* e = m->buckets[h]; e; e = e->next)

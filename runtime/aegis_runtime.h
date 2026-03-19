@@ -42,10 +42,12 @@ AegisList* aegis_range_step  (int64_t start, int64_t end, int64_t step);
 
 /* ── Map ─────────────────────────── */
 typedef struct AegisMap   AegisMap;
-AegisMap* aegis_map_new(void);
-void      aegis_map_set(AegisMap*, const char*, int64_t);
-int64_t   aegis_map_get(AegisMap*, const char*);
-int64_t   aegis_map_has(AegisMap*, const char*);
+AegisMap* aegis_map_new    (void);
+void      aegis_map_retain (AegisMap*);
+void      aegis_map_release(AegisMap*);
+void      aegis_map_set    (AegisMap*, const char*, int64_t);
+int64_t   aegis_map_get    (AegisMap*, const char*);
+int64_t   aegis_map_has    (AegisMap*, const char*);
 
 /* ── Object ──────────────────────── */
 typedef struct AegisObject AegisObject;
