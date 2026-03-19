@@ -1,0 +1,9 @@
+C:/Users/91790/Downloads/aegis_final/aegis_patched/build/CMakeFiles/aegis.dir
+C:/Users/91790/Downloads/aegis_final/aegis_patched/build/CMakeFiles/aegis_runtime.dir
+C:/Users/91790/Downloads/aegis_final/aegis_patched/build/CMakeFiles/test.dir
+C:/Users/91790/Downloads/aegis_final/aegis_patched/build/CMakeFiles/edit_cache.dir
+C:/Users/91790/Downloads/aegis_final/aegis_patched/build/CMakeFiles/rebuild_cache.dir
+C:/Users/91790/Downloads/aegis_final/aegis_patched/build/CMakeFiles/list_install_components.dir
+C:/Users/91790/Downloads/aegis_final/aegis_patched/build/CMakeFiles/install.dir
+C:/Users/91790/Downloads/aegis_final/aegis_patched/build/CMakeFiles/install/local.dir
+C:/Users/91790/Downloads/aegis_final/aegis_patched/build/CMakeFiles/install/strip.dir

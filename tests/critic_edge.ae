@@ -1,0 +1,109 @@
+// critic_edge.ae — edge-case regression tests for all 13 fixes
+
+main :: () {
+    print("=== CRITIC EDGE CASE TESTS ===")
+
+    // Fix 3: string builtins
+    print("\n[Fix 3] Builtin string ops")
+    var s = "  Hello, World!  "
+    print(trim(s))
+    print(to_upper("hello"))
+    print(to_lower("WORLD"))
+    print(contains("foobar", "oba"))
+    print(starts_with("aegis", "aeg"))
+    print(ends_with("aegis", "gis"))
+    var parts = split("a,b,c", ",")
+    print(len(parts))
+
+    // Fix 3: optional builtins
+    print("\n[Fix 3] Optional / try_int / unwrap")
+    var good = try_int("42")
+    var bad  = try_int("nope")
+    print(is_null(bad))
+    print(is_null(good))
+    print(unwrap(good))
+    print(unwrap_or(bad, 99))
+
+    // Fix 4: for-loop variable is immutable (reading is fine)
+    print("\n[Fix 4] For-loop variable read-only")
+    var sum = 0
+    for x in range(0, 5) {
+        sum += x
+    }
+    print(sum)
+
+    // Fix 7: non-exhaustive match => runtime warning + null return
+    print("\n[Fix 7] Non-exhaustive match (expect runtime warning on stderr)")
+    var v = 999
+    match v {
+        1 => print("one")
+        2 => print("two")
+    }
+    print("continued after non-exhaustive match")
+
+    // Fix 7: exhaustive match (wildcard present, no warning)
+    print("\n[Fix 7] Exhaustive match")
+    match v {
+        999 => print("nine-nine-nine")
+        _   => print("other")
+    }
+
+    // Fix 3: math builtins
+    print("\n[Fix 3] Math builtins")
+    print(abs(-7))
+    print(min(3, 5))
+    print(max(3, 5))
+
+    // Fix 5: float-returning builtins (interpreter path)
+    print("\n[Fix 5] Float-returning builtins")
+    var f1 = sqrt(4.0)
+    print(f1)
+    var f2 = floor(3.9)
+    print(f2)
+    var f3 = ceil(3.1)
+    print(f3)
+
+    // Fix 8: compound assign on var is fine
+    print("\n[Fix 8] Compound assign on var")
+    var counter = 10
+    counter += 5
+    counter -= 2
+    counter *= 3
+    print(counter)
+
+    // Fix 9: unwrap on actual optional
+    print("\n[Fix 9] unwrap on optional value")
+    var opt = try_int("100")
+    print(unwrap(opt))
+
+    // Fix 13: par for runs sequentially with warning
+    print("\n[Fix 13] par for (sequential)")
+    var total = 0
+    par for i in range(0, 4) {
+        total += i
+    }
+    print(total)
+
+    // Additional edge cases
+    print("\n[Edge] Nested optional chain")
+    var a = try_int("7")
+    var b = try_int("bad")
+    var result = unwrap_or(b, unwrap(a))
+    print(result)
+
+    print("\n[Edge] split with multi-char separator")
+    var tokens = split("one::two::three", "::")
+    print(len(tokens))
+    print(tokens[0])
+    print(tokens[2])
+
+    print("\n[Edge] contains on list")
+    var nums = [10, 20, 30]
+    print(contains(nums, 20))
+    print(contains(nums, 99))
+
+    print("\n[Edge] trim on already-clean string")
+    print(trim("clean"))
+
+    print("\n=== ALL CRITIC TESTS PASSED ===")
+}

@@ -1,0 +1,326 @@
+// ═══════════════════════════════════════════════════════════
+//  calculator.ae — Scientific Calculator in Aegis
+//
+//  Features:
+//    • Basic arithmetic:  + - * / %
+//    • Power:             pow(base, exp)
+//    • Roots:             sqrt(n)
+//    • Trig:              sin, cos
+//    • Logarithm:         log(n)
+//    • History:           last 5 results stored & recalled
+//    • Constants:         pi, e
+//    • Unit conversion:   deg<->rad, km<->miles, C<->F
+//    • Statistics:        mean, variance of a number list
+//    • Commands:          history, help, quit
+// ═══════════════════════════════════════════════════════════
+
+use aegis::io;
+use aegis::math;
+
+// ─────────────────────────────────────────
+//  History — circular buffer of 5 results
+// ─────────────────────────────────────────
+class History {
+    entries: [str];
+    size:    int;
+
+    init() {
+        self.entries = [];
+        self.size    = 0;
+    }
+
+    push :: (self, entry: str) {
+        push(self.entries, entry);
+        if self.size >= 5 {
+            // drop oldest: rebuild without index 0
+            var fresh = [];
+            var i = 1;
+            while i < len(self.entries) {
+                push(fresh, self.entries[i]);
+                i += 1;
+            }
+            self.entries = fresh;
+        } else {
+            self.size += 1;
+        }
+    }
+
+    print_all :: (self) {
+        if self.size == 0 {
+            io::print("  (no history yet)");
+            return;
+        }
+        var i = 0;
+        while i < len(self.entries) {
+            io::print("  [" + str(i + 1) + "] " + self.entries[i]);
+            i += 1;
+        }
+    }
+}
+
+// ─────────────────────────────────────────
+//  Formatting — trim trailing zeros from float
+// ─────────────────────────────────────────
+fmt :: (val: float) -> str {
+    // If the value is a whole number, show it without decimals
+    let floored = math::floor(val);
+    if val == floored && val > -1e15 && val < 1e15 {
+        return str(int(val));
+    }
+    return str(val);
+}
+
+// ─────────────────────────────────────────
+//  Statistics helpers
+// ─────────────────────────────────────────
+list_mean :: (nums: [float]) -> float {
+    if len(nums) == 0 { return 0.0; }
+    var total = 0.0;
+    for n in nums { total += n; }
+    return total / float(len(nums));
+}
+
+list_variance :: (nums: [float]) -> float {
+    if len(nums) == 0 { return 0.0; }
+    let m = list_mean(nums);
+    var acc = 0.0;
+    for n in nums {
+        let diff = n - m;
+        acc += diff * diff;
+    }
+    return acc / float(len(nums));
+}
+
+list_stddev :: (nums: [float]) -> float {
+    return math::sqrt(list_variance(nums));
+}
+
+// ─────────────────────────────────────────
+//  Banner
+// ─────────────────────────────────────────
+print_banner :: () {
+    io::print("+==========================================+");
+    io::print("|   Aegis Scientific Calculator  v1.0     |");
+    io::print("+==========================================+");
+    io::print("|  Type 'help' for commands, 'quit' to exit|");
+    io::print("+==========================================+");
+    io::print("");
+}
+
+// ─────────────────────────────────────────
+//  Help
+// ─────────────────────────────────────────
+print_help :: () {
+    io::print("");
+    io::print("  -- Arithmetic ----------------------------------");
+    io::print("  add <a> <b>       a + b");
+    io::print("  sub <a> <b>       a - b");
+    io::print("  mul <a> <b>       a * b");
+    io::print("  div <a> <b>       a / b");
+    io::print("  mod <a> <b>       a mod b  (integers)");
+    io::print("  pow <a> <b>       a ^ b");
+    io::print("");
+    io::print("  -- Scientific ----------------------------------");
+    io::print("  sqrt <n>          square root of n");
+    io::print("  log  <n>          natural log of n");
+    io::print("  sin  <deg>        sine   (degrees)");
+    io::print("  cos  <deg>        cosine (degrees)");
+    io::print("  abs  <n>          absolute value");
+    io::print("");
+    io::print("  -- Constants -----------------------------------");
+    io::print("  pi                3.14159265...");
+    io::print("  e                 2.71828182...");
+    io::print("");
+    io::print("  -- Conversions ---------------------------------");
+    io::print("  deg2rad <deg>     degrees -> radians");
+    io::print("  rad2deg <rad>     radians -> degrees");
+    io::print("  km2mi   <km>      kilometres -> miles");
+    io::print("  mi2km   <mi>      miles -> kilometres");
+    io::print("  c2f     <c>       Celsius -> Fahrenheit");
+    io::print("  f2c     <f>       Fahrenheit -> Celsius");
+    io::print("");
+    io::print("  -- Statistics ----------------------------------");
+    io::print("  mean  <a> <b> ... mean of a list");
+    io::print("  var   <a> <b> ... population variance");
+    io::print("  std   <a> <b> ... standard deviation");
+    io::print("");
+    io::print("  -- Session -------------------------------------");
+    io::print("  history           show last 5 results");
+    io::print("  help              show this message");
+    io::print("  quit              exit the calculator");
+    io::print("");
+}
+
+// ─────────────────────────────────────────
+//  Safe division
+// ─────────────────────────────────────────
+safe_div :: (a: float, b: float) -> str {
+    if b == 0.0 {
+        return "Error: division by zero";
+    }
+    return fmt(a / b);
+}
+
+// ─────────────────────────────────────────
+//  Process one command string
+//  Returns the result string, or "" for
+//  non-result commands (help, history).
+// ─────────────────────────────────────────
+process :: (cmd: str, hist: History) -> str {
+    let raw_parts = split(trim(cmd), " ");
+    // Filter out empty tokens (handles multiple consecutive spaces)
+    var parts = [];
+    for p in raw_parts {
+        if trim(p) != "" {
+            push(parts, p);
+        }
+    }
+    let n = len(parts);
+
+    if n == 0 { return ""; }
+
+    let op = to_lower(parts[0]);
+
+    // ── quit / help / history (no numeric result) ──
+    if op == "quit" || op == "exit" || op == "q" {
+        return "__QUIT__";
+    }
+    if op == "help" || op == "?" {
+        print_help();
+        return "";
+    }
+    if op == "history" || op == "hist" {
+        io::print("\n  -- Last results --------------------------------");
+        hist.print_all();
+        io::print("");
+        return "";
+    }
+
+    // ── Constants ──
+    if op == "pi" {
+        return fmt(math::pi);
+    }
+    if op == "e" {
+        return fmt(math::e);
+    }
+
+    // ── Single-argument ops ──
+    if n == 2 {
+        let av = try_float(parts[1]);
+        if is_null(av) {
+            return "Error: '" + parts[1] + "' is not a number";
+        }
+        let a = unwrap(av);
+
+        match op {
+            "sqrt" => {
+                if a < 0.0 { return "Error: sqrt of negative number"; }
+                return fmt(math::sqrt(a));
+            }
+            "log"  => {
+                if a <= 0.0 { return "Error: log requires positive number"; }
+                return fmt(math::log(a));
+            }
+            "sin"  => {
+                let rad = a * math::pi / 180.0;
+                return fmt(math::sin(rad));
+            }
+            "cos"  => {
+                let rad = a * math::pi / 180.0;
+                return fmt(math::cos(rad));
+            }
+            "abs"  => { return fmt(math::abs(a)); }
+            "deg2rad" => { return fmt(a * math::pi / 180.0); }
+            "rad2deg" => { return fmt(a * 180.0 / math::pi); }
+            "km2mi"   => { return fmt(a * 0.621371); }
+            "mi2km"   => { return fmt(a * 1.60934); }
+            "c2f"     => { return fmt(a * 9.0 / 5.0 + 32.0); }
+            "f2c"     => { return fmt((a - 32.0) * 5.0 / 9.0); }
+            _      => {}
+        }
+    }
+
+    // ── Two-argument arithmetic ops ──
+    if n == 3 {
+        let av = try_float(parts[1]);
+        let bv = try_float(parts[2]);
+        if is_null(av) { return "Error: '" + parts[1] + "' is not a number"; }
+        if is_null(bv) { return "Error: '" + parts[2] + "' is not a number"; }
+        let a = unwrap(av);
+        let b = unwrap(bv);
+
+        match op {
+            "add" => { return fmt(a + b); }
+            "sub" => { return fmt(a - b); }
+            "mul" => { return fmt(a * b); }
+            "div" => { return safe_div(a, b); }
+            "mod" => {
+                if b == 0.0 { return "Error: modulo by zero"; }
+                return str(int(a) % int(b));
+            }
+            "pow" => { return fmt(math::pow(a, b)); }
+            _     => {}
+        }
+    }
+
+    // ── Statistics: 2+ arguments ──
+    if n >= 3 {
+        var nums: [float] = [];
+        var bad_arg = "";
+        var i = 1;
+        while i < n {
+            let v = try_float(parts[i]);
+            if is_null(v) {
+                bad_arg = parts[i];
+            } else {
+                push(nums, unwrap(v));
+            }
+            i += 1;
+        }
+        if bad_arg != "" {
+            return "Error: '" + bad_arg + "' is not a number";
+        }
+
+        match op {
+            "mean" => { return fmt(list_mean(nums)); }
+            "var"  => { return fmt(list_variance(nums)); }
+            "std"  => { return fmt(list_stddev(nums)); }
+            _      => {}
+        }
+    }
+
+    return "Error: unknown command '" + op + "' — type 'help' for commands";
+}
+
+// ─────────────────────────────────────────
+//  Main — REPL loop
+// ─────────────────────────────────────────
+main :: () {
+    print_banner();
+
+    var hist    = History();
+    var running = true;
+    var count   = 0;
+
+    while running {
+        io::print("calc> ");
+        let line = io::readline();
+
+        if trim(line) == "" { continue; }
+
+        let result = process(line, hist);
+
+        if result == "__QUIT__" {
+            io::print("\nGoodbye! (" + str(count) + " calculations performed)");
+            running = false;
+        } elif result != "" {
+            // Print and record numeric results
+            let entry = trim(line) + "  =  " + result;
+            io::print("  = " + result);
+            hist.push(entry);
+            count += 1;
+        }
+
+        io::print("");
+    }
+}

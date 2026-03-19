@@ -1,0 +1,352 @@
+// ───────────────────────────────────────────
+//  Aegis Language — Full Feature Test
+//  test3.ae
+// ───────────────────────────────────────────
+
+use aegis::io;
+use aegis::math;
+
+// ══════════════════════════════════════════
+//  1. Basic variables and arithmetic
+// ══════════════════════════════════════════
+test_basics :: () {
+    io::print("── Test: Basics ──");
+
+    let x: int   = 10;
+    var y: int   = 20;
+    const PI     = 3.14159;
+    let name: str = "Aegis";
+
+    io::print(x + y);
+    io::print(PI);
+    io::print(name);
+    io::print("Types work: " + str(x));
+
+    y += 5;
+    io::print(y);
+
+    let z = x * y - 2;
+    io::print(z);
+}
+
+// ══════════════════════════════════════════
+//  2. Conditionals
+// ══════════════════════════════════════════
+test_conditionals :: () {
+    io::print("── Test: Conditionals ──");
+
+    var x = 42;
+
+    if x > 100 {
+        io::print("big");
+    } elif x > 10 {
+        io::print("medium");
+    } else {
+        io::print("small");
+    }
+
+    let label = x > 0 ? "positive" : "negative";
+    io::print(label);
+}
+
+// ══════════════════════════════════════════
+//  3. Loops
+// ══════════════════════════════════════════
+test_loops :: () {
+    io::print("── Test: Loops ──");
+
+    // for-range
+    var sum = 0;
+    for i in range(1, 6) {
+        sum += i;
+    }
+    io::print("sum 1..5 = " + str(sum));
+
+    // while
+    var n = 10;
+    var count = 0;
+    while n > 0 {
+        n -= 3;
+        count += 1;
+    }
+    io::print("while count = " + str(count));
+
+    // loop + break
+    var k = 0;
+    loop {
+        k += 1;
+        if k >= 5 { break; }
+    }
+    io::print("loop k = " + str(k));
+
+    // for over list
+    let fruits = ["apple", "banana", "cherry"];
+    for fruit in fruits {
+        io::print(fruit);
+    }
+}
+
+// ══════════════════════════════════════════
+//  4. Functions & Recursion
+// ══════════════════════════════════════════
+factorial :: (n: int) -> int {
+    if n <= 1 { return 1; }
+    return n * factorial(n - 1);
+}
+
+fib :: (n: int) -> int {
+    if n <= 1 { return n; }
+    return fib(n - 1) + fib(n - 2);
+}
+
+add :: (a: int, b: int) -> int => a + b;
+
+test_functions :: () {
+    io::print("── Test: Functions ──");
+    io::print("5! = " + str(factorial(5)));
+    io::print("fib(8) = " + str(fib(8)));
+    io::print("add(3,4) = " + str(add(3, 4)));
+}
+
+// ══════════════════════════════════════════
+//  5. Lambda
+// ══════════════════════════════════════════
+test_lambda :: () {
+    io::print("── Test: Lambda ──");
+
+    let square   = |x: int| -> int => x * x;
+    let cube     = |x: int| -> int => x * x * x;
+    let add_five = |x: int| -> int => x + 5;
+
+    io::print("square(7) = " + str(square(7)));
+    io::print("cube(4) = "   + str(cube(4)));
+    io::print("add_five(10) = " + str(add_five(10)));
+
+    // Higher-order: apply
+    apply :: (f: int, x: int) -> int { return f + x; }
+
+    // Lambda summing a list
+    var total = 0;
+    let nums = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+    for n in nums {
+        total += n;
+    }
+    io::print("sum 1-10 = " + str(total));
+}
+
+// ══════════════════════════════════════════
+//  6. Match
+// ══════════════════════════════════════════
+day_name :: (d: int) -> str {
+    match d {
+        1 => return "Monday";
+        2 => return "Tuesday";
+        3 => return "Wednesday";
+        4 => return "Thursday";
+        5 => return "Friday";
+        6 => return "Saturday";
+        7 => return "Sunday";
+        _ => return "Unknown";
+    }
+}
+
+test_match :: () {
+    io::print("── Test: Match ──");
+    io::print(day_name(1));
+    io::print(day_name(5));
+    io::print(day_name(7));
+    io::print(day_name(9));
+}
+
+// ══════════════════════════════════════════
+//  7. OOP — Classes & Inheritance
+// ══════════════════════════════════════════
+class Shape {
+    name: str;
+    color: str;
+
+    init(name: str, color: str) {
+        self.name  = name;
+        self.color = color;
+    }
+
+    describe :: (self) {
+        io::print(self.color + " " + self.name);
+    }
+
+    area :: (self) -> float {
+        return 0.0;
+    }
+}
+
+class Circle : Shape {
+    radius: float;
+
+    init(color: str, radius: float) {
+        self.name   = "Circle";
+        self.color  = color;
+        self.radius = radius;
+    }
+
+    area :: (self) -> float {
+        return 3.14159 * self.radius * self.radius;
+    }
+
+    describe :: (self) {
+        io::print(self.color + " Circle r=" + str(self.radius)
+                  + " area=" + str(self.area()));
+    }
+}
+
+class Rectangle : Shape {
+    width: float;
+    height: float;
+
+    init(color: str, width: float, height: float) {
+        self.name   = "Rectangle";
+        self.color  = color;
+        self.width  = width;
+        self.height = height;
+    }
+
+    area :: (self) -> float {
+        return self.width * self.height;
+    }
+
+    describe :: (self) {
+        io::print(self.color + " Rect " + str(self.width)
+                  + "x" + str(self.height)
+                  + " area=" + str(self.area()));
+    }
+}
+
+test_oop :: () {
+    io::print("── Test: OOP ──");
+
+    var c = Circle("red", 5.0);
+    c.describe();
+
+    var r = Rectangle("blue", 4.0, 6.0);
+    r.describe();
+
+    io::print("Circle area: " + str(c.area()));
+    io::print("Rect area: "   + str(r.area()));
+
+    // Mutate fields
+    c.color = "green";
+    c.describe();
+}
+
+// ══════════════════════════════════════════
+//  8. Lists & built-ins
+// ══════════════════════════════════════════
+test_lists :: () {
+    io::print("── Test: Lists ──");
+
+    var nums = [10, 20, 30, 40, 50];
+    io::print("len = " + str(len(nums)));
+    io::print("first = " + str(nums[0]));
+    io::print("last = "  + str(nums[4]));
+
+    push(nums, 60);
+    io::print("after push len = " + str(len(nums)));
+
+    var popped = pop(nums);
+    io::print("popped = " + str(popped));
+
+    // Build a list dynamically
+    var squares: int = 0;
+    var sq_list = [0];
+    pop(sq_list);
+    for i in range(1, 6) {
+        push(sq_list, i * i);
+    }
+    for v in sq_list {
+        io::print(str(v));
+    }
+}
+
+// ══════════════════════════════════════════
+//  9. Memory — own / region / channel
+// ══════════════════════════════════════════
+test_memory :: () {
+    io::print("── Test: Memory ──");
+
+    // own<T> allocation
+    let buf = own<int>(42);
+    io::print("owned value: " + str(buf));
+
+    // region — scoped allocation
+    region scratch {
+        var tmp = alloc<int>(99);
+        io::print("region tmp = " + str(tmp));
+    }
+    io::print("region freed");
+
+    // channel + send/recv
+    let ch = channel<int>();
+    send(ch, 100);
+    send(ch, 200);
+    let v1 = recv(ch);
+    let v2 = recv(ch);
+    io::print("ch recv: " + str(v1) + ", " + str(v2));
+}
+
+// ══════════════════════════════════════════
+//  10. Higher-order & closures
+// ══════════════════════════════════════════
+make_adder :: (n: int) -> int {
+    return n;
+}
+
+test_closures :: () {
+    io::print("── Test: Closures ──");
+
+    let double = |x: int| -> int => x * 2;
+    let triple = |x: int| -> int => x * 3;
+
+    var results = [0];
+    pop(results);
+    for i in range(1, 6) {
+        push(results, double(i));
+    }
+    io::print("doubled:");
+    for r in results {
+        io::print(str(r));
+    }
+}
+
+// ══════════════════════════════════════════
+//  main — run all tests
+// ══════════════════════════════════════════
+main :: () {
+    io::print("╔══════════════════════════════╗");
+    io::print("║   Aegis Language Test Suite  ║");
+    io::print("╚══════════════════════════════╝");
+    io::print("");
+
+    test_basics();
+    io::print("");
+    test_conditionals();
+    io::print("");
+    test_loops();
+    io::print("");
+    test_functions();
+    io::print("");
+    test_lambda();
+    io::print("");
+    test_match();
+    io::print("");
+    test_oop();
+    io::print("");
+    test_lists();
+    io::print("");
+    test_memory();
+    io::print("");
+    test_closures();
+
+    io::print("");
+    io::print("╔══════════════════════════════╗");
+    io::print("║   All tests complete!        ║");
+    io::print("╚══════════════════════════════╝");
+}
