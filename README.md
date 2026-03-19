@@ -289,4 +289,4 @@ cmake --build build
 
 ## License
 
-MIT
+GPL 3.0
