@@ -1,0 +1,8 @@
+main :: () {
+	io::print("Hello")
+	let x: int = 10;
+	for i in 0..x {
+		io::print(i);
+	}
+}
+
