@@ -1,0 +1,55 @@
+{
+  "name": "aegis-lang",
+  "displayName": "Aegis Language Support",
+  "description": "Syntax highlighting and live diagnostics for the Aegis programming language (Windows + Linux + macOS).",
+  "version": "0.1.0",
+  "engines": { "vscode": "^1.75.0" },
+  "categories": ["Programming Languages", "Linters"],
+  "activationEvents": ["onLanguage:aegis"],
+  "main": "./src/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "aegis.checkFile",
+        "title": "Aegis: Check Current File"
+      }
+    ],
+    "languages": [
+      {
+        "id": "aegis",
+        "aliases": ["Aegis", "aegis"],
+        "extensions": [".ae"],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "aegis",
+        "scopeName": "source.aegis",
+        "path": "./syntaxes/aegis.tmLanguage.json"
+      }
+    ],
+    "configuration": {
+      "title": "Aegis",
+      "properties": {
+        "aegis.executablePath": {
+          "type": "string",
+          "default": "aegis",
+          "description": "Path to the aegis compiler executable. Defaults to 'aegis' on PATH — on Windows this resolves to aegis.exe automatically if it's on PATH. Set an absolute path (e.g. C:\\tools\\aegis\\aegis.exe or /usr/local/bin/aegis) if it isn't."
+        },
+        "aegis.checkOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run 'aegis check' automatically whenever an .ae file is saved."
+        },
+        "aegis.checkOnType": {
+          "type": "boolean",
+          "default": false,
+          "description": "Also run 'aegis check' as you type (debounced 500ms). Off by default since it spawns a process per check."
+        }
+      }
+    }
+  },
+  "scripts": {},
+  "devDependencies": {}
+}
